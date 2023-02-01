@@ -12,7 +12,8 @@ from spikeinterface.core.core_tools import define_function_from_class
 try:
     import brainbox
     from one.api import ONE
-
+    import tqdm  # installed by ibllib
+    
     HAVE_BRAINBOX_ONE = True
 except ModuleNotFoundError:
     HAVE_BRAINBOX_ONE = False
@@ -130,9 +131,20 @@ class StreamingIblExtractor(BaseRecording):
         pid = next(insertion["id"] for insertion in insertions if insertion["name"] == probe_label)
 
         cache_folder = Path(cache_folder) if cache_folder is not None else cache_folder
-        self._file_streamer = Streamer(
-            pid=pid, one=one, typ=stream_type, cache_folder=cache_folder, remove_cached=remove_cached
-        )
+
+        enabled_tqdm = tqdm.tqdm
+        #print(help(tqdm.tqdm))
+        def disabled_tqdm(iterator, *args, **kwargs):
+            return iterator
+
+        tqdm.tqdm = disabled_tqdm
+        #print(help(tqdm.tqdm))
+        with redirect_stderr(StringIO()):
+            self._file_streamer = Streamer(
+                pid=pid, one=one, typ=stream_type, cache_folder=cache_folder, remove_cached=remove_cached
+            )
+        tqdm.tqdm = enabled_tqdm
+        #print(help(tqdm.tqdm))
 
         # get basic metadata
         meta_file = self._file_streamer.file_meta_data  # streamer downloads uncompressed metadata files on init
