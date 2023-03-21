@@ -87,6 +87,11 @@ widgets = [
     "sortingview>=0.11.0",
     "figurl-jupyter"
 ]
+test_core = [
+    "pytest",
+    "zarr",
+    "psutil",
+]
 
 test = [
     "pytest",
